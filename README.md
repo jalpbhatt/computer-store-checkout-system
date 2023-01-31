@@ -45,8 +45,10 @@ Tech stack:
 - Can write a middleware which can map routes based on their file name instead of create/maintain `route` dir
 - Add more specific `cors` level config options
 - Provide better user messaging on internal api errors - at this stage, its basic
+- Kept one console statement for notify server start in `app.ts`
 - In terms of additional feature request
   - If we want to add new product category then we can expose/add that endpoint
+
 
 ## Setup
 Run in your terminal the following commands
