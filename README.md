@@ -1,4 +1,4 @@
-# Seek Job Ads Checkout System API 
+#Job Ads Checkout System API 
 
 ## System overview
 To design, job ads systems can have multiple front-end and backend solutions. This document will provide
