@@ -36,7 +36,7 @@ Tech stack:
   1. Only one discount type provided for one product
 - API request validations implemented via `joi`
 
-## Known improvements
+## Known improvements (for future)
 - Unit & Integration Tests are kept in one file for simplicity
   - can improve dir structure
   - can think of whether to create a separate `test` dir or keep `*.test.ts` files at file level
