@@ -55,41 +55,36 @@ export class RuleEngine {
     }
 
     apply(ads: Ads): number {
-        try {
-            const {customer} = ads;
-            const findRelatedCustomer = this.rules.find(rule => rule.customer === customer);
-
-            if (findRelatedCustomer) {
-                const selectedRulesByAdType = this.fetchRulesByAdType(ads, findRelatedCustomer.rules);
-                Object.keys(selectedRulesByAdType).forEach(value => {
-                    const type = selectedRulesByAdType[value];
-                    const adQty = Number(ads[value as keyof typeof ads]) || 0;
-                    if (type.isApplicable) {
-                        type.applicableRules.forEach(rule => { // process rules & apply pricing accordingly
-                            switch (rule.discountType.trim()) {
-                                case 'x for y':
-                                    this.totalAdsCost += this.getPriceXForY(rule, adQty, defaultAdsPriceModel[value]);
-                                    break;
-                                case '$ drop':
-                                    this.totalAdsCost += this.getPriceDropOff(rule, adQty, defaultAdsPriceModel[value]);
-                                    break;
-                                case '% drop':
-                                    this.totalAdsCost += this.getPricePerOff(rule, adQty, defaultAdsPriceModel[value]);
-                                    break;
-                            }
-                        });
-                    } else { // apply default pricing if rule does not applicable
-                        this.totalAdsCost += this.getDefaultPrice(adQty, defaultAdsPriceModel[value]);
-                    }
-                });
-            } else { // non-privilege customers - apply default pricing
-                Object.keys(adTypeRuleMapping).forEach(value => {
-                    const adQty = Number(ads[value as keyof typeof ads]) || 0;
+        const {customer} = ads;
+        const findRelatedCustomer = this.rules.find(rule => rule.customer === customer);
+        if (findRelatedCustomer) {
+            const selectedRulesByAdType = this.fetchRulesByAdType(ads, findRelatedCustomer.rules);
+            Object.keys(selectedRulesByAdType).forEach(value => {
+                const type = selectedRulesByAdType[value];
+                const adQty = Number(ads[value as keyof typeof ads]) || 0;
+                if (type.isApplicable) {
+                    type.applicableRules.forEach(rule => { // process rules & apply pricing accordingly
+                        switch (rule.discountType.trim()) {
+                            case 'x for y':
+                                this.totalAdsCost += this.getPriceXForY(rule, adQty, defaultAdsPriceModel[value]);
+                                break;
+                            case '$ drop':
+                                this.totalAdsCost += this.getPriceDropOff(rule, adQty, defaultAdsPriceModel[value]);
+                                break;
+                            case '% drop':
+                                this.totalAdsCost += this.getPricePerOff(rule, adQty, defaultAdsPriceModel[value]);
+                                break;
+                        }
+                    });
+                } else { // apply default pricing if rule does not applicable
                     this.totalAdsCost += this.getDefaultPrice(adQty, defaultAdsPriceModel[value]);
-                });
-            }
-        } catch (e) {
-            throw e;
+                }
+            });
+        } else { // non-privilege customers - apply default pricing
+            Object.keys(adTypeRuleMapping).forEach(value => {
+                const adQty = Number(ads[value as keyof typeof ads]) || 0;
+                this.totalAdsCost += this.getDefaultPrice(adQty, defaultAdsPriceModel[value]);
+            });
         }
         return this.totalAdsCost;
     }

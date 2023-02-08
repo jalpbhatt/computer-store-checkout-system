@@ -8,7 +8,7 @@
     "build": "tsc",
     "prestart": "npm run build",
     "start": "nodemon ./src/app.ts",
-    "test": "mocha -r ts-node/register ./test/**/*.test.ts"
+    "test": "mocha -r ts-node/register 'src/**/*.ts'"
   },
   "keywords": [],
   "author": "",
