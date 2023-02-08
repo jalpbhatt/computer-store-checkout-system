@@ -1,4 +1,10 @@
-## Job Ads Checkout System API 
+## Job Ads Checkout System API
+
+## Tech stack:
+- `Node JS` with `Express`
+- `Typescript`
+- `Joi` for REST request validations
+- `Mocha` & `Chai` for Unit/Integration tests
 
 ## System overview
 To design, job ads systems can have multiple front-end and backend solutions. This document will provide
@@ -13,11 +19,14 @@ assumptions taken in considerations which are:
       can add or modify rules which will be reflected in the backend systems
  - Datastore to store rules will be in-memory and not in the real database
 
-Tech stack:
-- `Node JS` with `Express`
-- `Typescript`
-- `Joi` for REST request validations
-- `Mocha` & `Chai` for Unit/Integration tests
+The codebase is divided into a few separate layers:
+
+- `src/controllers` defines actions (business logic) for each request handler.
+- `src/routes` defines HTTP request handlers (one per endpoint).
+- `src/middleware` common express middlewares
+- `src/lib` contains feature specific business logic
+- `app.ts` sets up Express.js app and up the HTTP server.
+- `src/constants` contains common application wide constants
 
 ## Implementation considerations
 
@@ -37,9 +46,6 @@ Tech stack:
 - API request validations implemented via `joi`
 
 ## Known improvements (for future)
-- Unit & Integration Tests are kept in one file for simplicity
-  - can improve dir structure
-  - can think of whether to create a separate `test` dir or keep `*.test.ts` files at file level
 - Database design & ER mapping to store the dynamic rules & its execution
 - To showcase approach for api req validation - implemented for only one `/checkout` endpoint
 - Can write a middleware which can map routes based on their file name instead of create/maintain `route` dir
@@ -63,12 +69,15 @@ Run in your terminal the following commands
 - Port localhost port `3001` should be available
 
 ## Test
-For simplicity, one file has unit and integrations test for the defined endpoints.
+In the interest of time, we have only included a minimal set of tests:
 - `cd ads-platform-api`
 - `npm test`
 
 This API can be tested via `postman` tool via following steps:
-- Execute endpoint to add rules -> `http://localhost:3001/pricingRules`, type `POST`, 
-  pass rules as a part of body - refer `src/lib/ruleEngine/samplePricingRules.ts`
-- Execute endpoint for price calculation -> `http://localhost:3001/checkout`, type `POST`,
-  pass rules as a part of body - refer `src/lib/ruleEngine/mockRequest.ts`
+- Execute endpoint to add rules: `http://localhost:3001/pricingRules`, 
+  - Method: `POST`,
+  - Body (required)
+    
+- Execute endpoint for price calculation: `http://localhost:3001/checkout`,
+  - Method: `POST`,
+  - Body (required)
