@@ -1,18 +1,11 @@
-import {Ads, Rule, RuleMapping, RulesDef} from "../../routes/types";
-import {defaultAdsPriceModel} from "./pricingModel";
-
-
-const adTypeRuleMapping: Record<string, RuleMapping> = {
-    'classic': null,
-    'standout': null,
-    'premium': null,
-};
+import {Products, Rule, RuleMapping, WaiveOff} from "../../routes/types";
+import {productCatalogPrice} from "./productCatalogPrice";
 
 export class RuleEngine {
-    rules: RulesDef[];
-    totalAdsCost: number = 0.0;
+    rules: Rule[];
+    totalProductCost: number = 0.0;
 
-    constructor(rules: RulesDef[]) {
+    constructor(rules: Rule[]) {
         this.rules = rules;
     };
 
@@ -22,8 +15,11 @@ export class RuleEngine {
         return (defaultPrice * remainder) + (quotient * to * defaultPrice);
     }
 
-    getPriceDropOff({discount}: Rule, qty: number, defaultPrice: number): number {
-        return (defaultPrice - discount) * qty;
+    getPriceDropOff({discount, graterThan = 0}: Rule, qty: number, defaultPrice: number): number {
+        if (qty > graterThan) {
+            return (defaultPrice - discount) * qty;
+        }
+        return defaultPrice * qty;
     }
 
     getPricePerOff({discount}: Rule, qty: number, defaultPrice: number): number {
@@ -32,21 +28,46 @@ export class RuleEngine {
         return ((defaultPrice * qty) - discountedVal);
     }
 
+    getPriceWaiveOff(qty: number, price: number, waivedOffPrice: number, waiveOff: WaiveOff) {
+        if (waiveOff.shouldWaiveOff) {
+            const tc = this.totalProductCost + (price * qty);
+            const wo = waivedOffPrice * waiveOff.qty;
+            return (tc - wo);
+        }
+        return (this.totalProductCost + (price * qty));
+    }
+
     getDefaultPrice(qty: number, defaultPrice: number): number {
         return qty * defaultPrice;
     }
 
-    fetchRulesByAdType(ads: Ads, rules: Rule[] = []): Record<string, RuleMapping> {
+    getProductCatalogList(): string[] {
+        return ['ipd', 'mbp', 'atv', 'vga'];
+    }
+
+    shouldWaivedOff(products: Products, req: Record<string, RuleMapping>, applyTo: string): WaiveOff {
+        const items = Object.keys(req).filter(key => key === applyTo);
+        const productQty = Number(products[items[0] as keyof typeof products]) || 0;
+        return {
+            shouldWaiveOff: !!items.length,
+            qty: productQty
+        };
+    }
+
+    fetchRulesByProductType(products: Products): Record<string, RuleMapping> {
+        /*
+        * Load this statically with in-memory store solution
+        * When working with database solution, product catalog list fetched via DB query
+        */
+        const productCatalog = this.getProductCatalogList();
         const transformReqObj: Record<string, RuleMapping> = {};
-        Object.keys(adTypeRuleMapping).forEach(value => {
-            const rulesByAdType = rules.filter((rule) => rule.adType === value);
-            if (rulesByAdType.length) {
-                transformReqObj[value] = {
+        Object.keys(products).forEach(value => {
+            if (productCatalog.includes(value)) {
+                const rulesByProductType = this.rules.filter((rule) => rule.productType === value);
+                transformReqObj[value] = rulesByProductType.length ? {
                     isApplicable: true,
-                    applicableRules: rulesByAdType
-                };
-            } else {
-                transformReqObj[value] = {
+                    applicableRules: rulesByProductType
+                } : {
                     isApplicable: false
                 };
             }
@@ -54,39 +75,52 @@ export class RuleEngine {
         return transformReqObj;
     }
 
-    apply(ads: Ads): number {
-        const {customer} = ads;
-        const findRelatedCustomer = this.rules.find(rule => rule.customer === customer);
-        if (findRelatedCustomer) {
-            const selectedRulesByAdType = this.fetchRulesByAdType(ads, findRelatedCustomer.rules);
-            Object.keys(selectedRulesByAdType).forEach(value => {
-                const type = selectedRulesByAdType[value];
-                const adQty = Number(ads[value as keyof typeof ads]) || 0;
-                if (type.isApplicable) {
-                    type.applicableRules.forEach(rule => { // process rules & apply pricing accordingly
-                        switch (rule.discountType.trim()) {
-                            case 'x for y':
-                                this.totalAdsCost += this.getPriceXForY(rule, adQty, defaultAdsPriceModel[value]);
-                                break;
-                            case '$ drop':
-                                this.totalAdsCost += this.getPriceDropOff(rule, adQty, defaultAdsPriceModel[value]);
-                                break;
-                            case '% drop':
-                                this.totalAdsCost += this.getPricePerOff(rule, adQty, defaultAdsPriceModel[value]);
-                                break;
-                        }
-                    });
-                } else { // apply default pricing if rule does not applicable
-                    this.totalAdsCost += this.getDefaultPrice(adQty, defaultAdsPriceModel[value]);
-                }
-            });
-        } else { // non-privilege customers - apply default pricing
-            Object.keys(adTypeRuleMapping).forEach(value => {
-                const adQty = Number(ads[value as keyof typeof ads]) || 0;
-                this.totalAdsCost += this.getDefaultPrice(adQty, defaultAdsPriceModel[value]);
-            });
+    t = {
+        "vga": {"isApplicable": false},
+        "mbp": {
+            "isApplicable": true,
+            "applicableRules": [{
+                "desc": "VGA adapter free on purchase of Macbook pro",
+                "productType": "mbp",
+                "discountType": "Free",
+                "applyTo": "vga",
+                "discount": 0,
+                "from": 0,
+                "to": 0
+            }]
         }
-        return this.totalAdsCost;
+    }
+
+
+    apply(products: Products): number {
+        const selectedRulesByProductType: Record<string, RuleMapping> = this.fetchRulesByProductType(products);
+        console.log(JSON.stringify(selectedRulesByProductType));
+        Object.keys(selectedRulesByProductType).forEach(value => {
+            const type = selectedRulesByProductType[value];
+            const productQty = Number(products[value as keyof typeof products]) || 0;
+            if (type.isApplicable) {
+                type.applicableRules.forEach((rule: any) => { // process rules & apply pricing accordingly
+                    switch (rule.discountType.trim().toLowerCase()) {
+                        case 'x for y':
+                            this.totalProductCost += this.getPriceXForY(rule, productQty, productCatalogPrice[rule.productType]);
+                            break;
+                        case '$ drop':
+                            this.totalProductCost += this.getPriceDropOff(rule, productQty, productCatalogPrice[value]);
+                            break;
+                        case '% drop': // additional discount type
+                            this.totalProductCost += this.getPricePerOff(rule, productQty, productCatalogPrice[rule.productType]);
+                            break;
+                        case 'free':
+                            this.totalProductCost = this.getPriceWaiveOff(productQty, productCatalogPrice[rule.productType],
+                                productCatalogPrice[rule.applyTo], this.shouldWaivedOff(products, selectedRulesByProductType, rule.applyTo));
+                            break;
+                    }
+                });
+            } else { // apply default pricing if rule does not applicable
+                this.totalProductCost += this.getDefaultPrice(productQty, productCatalogPrice[value]);
+            }
+        });
+        return this.totalProductCost;
     }
 }
 

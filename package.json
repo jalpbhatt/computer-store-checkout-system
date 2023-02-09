@@ -1,7 +1,7 @@
 {
-  "name": "ads-platform-api",
+  "name": "computer-store-checkout-system",
   "version": "1.0.0",
-  "description": "The ads platform Seek backend api",
+  "description": "Computer store checkout system as backend api",
   "main": "dist/app.ts",
   "scripts": {
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",

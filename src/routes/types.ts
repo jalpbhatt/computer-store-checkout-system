@@ -1,27 +1,30 @@
 export interface Rule {
     desc: string;
-    adType: string;
+    productType: string;
     discountType: string;
     discount?: number;
     from?: number;
     to?: number;
+    graterThan?:number;
+    applyTo?: string;
 }
 
-export interface RulesDef {
+export interface Products {
     customer: string;
-    rules: Rule[];
-}
-
-export interface Ads {
-    customer: string;
-    classic?: number;
-    standout?: number;
-    premium?: number;
+    ipd?: number;
+    mbp?: number;
+    atv?: number;
+    vga?: number;
 }
 
 export interface RuleMapping {
     isApplicable: boolean;
     applicableRules?: Rule[];
+}
+
+export interface WaiveOff {
+    shouldWaiveOff: boolean;
+    qty: number;
 }
 
 

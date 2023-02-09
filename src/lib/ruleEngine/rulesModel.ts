@@ -1,6 +1,6 @@
-import {RulesDef} from "../../routes/types";
+import {Rule} from "../../routes/types";
 
-export let customerRules: RulesDef[] = []; // in-memory storage for rules
-export const upsertRule = (request: RulesDef[]) => {
-    customerRules = request;
+export let productRules: Rule[] = []; // in-memory storage for rules
+export const upsertRule = (request: Rule[]) => {
+    productRules = request;
 }

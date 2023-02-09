@@ -1,129 +1,92 @@
-import {expect} from "chai";
 import {RuleEngine} from "./ruleEngine";
-import {Ads} from "../../routes/types";
+import {expect} from "chai";
+import {Products} from "../../routes/types";
 
 describe('Rule Engine Tests', () => {
 
     let ruleEngine: RuleEngine = null;
 
     beforeEach(() => {
-        const samplePricingRules = [
+        const sampleProductRules = [
             {
-                customer: 'SECONDBITE',
-                rules: [{
-                    desc: 'On purchase of 3 classic ads, you will only pay for 2',
-                    adType: 'classic',
-                    discountType: 'x for y',
-                    discount: 0,
-                    from: 3,
-                    to: 2
-                }]
+                "desc": "On purchase of 3 Apple TV, you will only pay for 2",
+                "productType": "atv",
+                "discountType": "x for y",
+                "discount": 0,
+                "from": 3,
+                "to": 2
             },
             {
-                customer: 'ACR',
-                rules: [{
-                    desc: 'You will get a discount of $23 on standout ads',
-                    adType: 'standout',
-                    discountType: '$ drop',
-                    discount: 23,
-                    from: 0,
-                    to: 0
-                }]
+                "desc": "You will get discount of $50 if you purchase > 4 iPad",
+                "productType": "ipd",
+                "discountType": "$ drop",
+                "discount": 50,
+                "graterThan": 4,
+                "from": 0,
+                "to": 0
             },
             {
-                customer: 'MYER',
-                rules: [
-                    {
-                        desc: 'On purchase of 5 standouts ads, you will only pay for 4',
-                        adType: 'standout',
-                        discountType: 'x for y',
-                        discount: 0,
-                        from: 5,
-                        to: 4
-                    }, {
-                        desc: 'you will get discount of $5 on premium ads',
-                        adType: 'premium',
-                        discountType: '$ drop',
-                        discount: 5,
-                        from: 0,
-                        to: 0
-                    }]
-            },
-            {
-                customer: 'COLES',
-                rules: [
-                    {
-                        desc: 'Get 5% flat off on premium ads',
-                        adType: 'premium',
-                        discountType: '% drop',
-                        discount: 5,
-                        from: 0,
-                        to: 0
-                    }
-                ]
+                "desc": "VGA adapter free on purchase of Macbook pro",
+                "productType": "mbp",
+                "discountType": "Free",
+                "applyTo": "vga",
+                "discount": 0,
+                "from": 0,
+                "to": 0
             }
         ];
-        ruleEngine = new RuleEngine(samplePricingRules);
+        ruleEngine = new RuleEngine(sampleProductRules);
     });
 
-    it('should return expected total for non-privileged customer when items selected as [1C, 1S, 1P]', () => {
-        const items: Ads = {
-            "customer": "default",
-            "classic": 1,
-            "standout": 1,
-            "premium": 1
+    it('should return expected total when items selected as [Vga, iPad, mac]', () => {
+        const items: Products = {
+            "customer": "xz",
+            "vga": 1,
+            "ipd": 1,
+            "mbp": 1
         }
         const total = ruleEngine.apply(items);
-        expect(total).to.equal(987.97);
+        expect(total).to.equal(1949.98);
     });
 
-    it('should return expected total for privileged customer when items selected as [3C, 1P]', () => {
-        const items: Ads = {
-            "customer": "SECONDBITE",
-            "classic": 3,
-            "premium": 1
+    it('should return expected total when items selected as [Vga, 3 AppleTv]', () => {
+        const items: Products = {
+            "customer": "xz",
+            "vga": 1,
+            "atv": 3,
         };
         const total = ruleEngine.apply(items);
-        expect(total).to.equal(934.97);
+        expect(total).to.equal(249.00);
     });
 
-    it('should return expected total for privileged customer when items selected as [3S, 1P]', () => {
-        const items: Ads = {
-            "customer": "ACR",
-            "standout": 3,
-            "premium": 1
-        };
+    it('should return expected total when items selected as [2 AppleTv, 5 iPads]', () => {
+        const items: Products = {
+            "customer": "xz",
+            "atv": 2,
+            "ipd": 5
+        }
         const total = ruleEngine.apply(items);
-        expect(total).to.equal(1294.96);
+        expect(total).to.equal(2718.95);
     });
 
-    it('should return expected total for privileged customer when items selected as [3S, 1P]', () => {
-        const items: Ads = {
-            "customer": "MYER",
-            "standout": 3,
-            "premium": 1
+    it('should return expected total when items selected as [3 mac, 1 iPad]', () => {
+        const items: Products = {
+            "customer": "xz",
+            "ipd": 1,
+            "mbp": 3
         };
         const total = ruleEngine.apply(items);
-        expect(total).to.equal(1358.96);
+        expect(total).to.equal(4749.96);
     });
 
-    it('should return expected total for privileged customer when items selected as [9S, 1P]', () => {
-        const items: Ads = {
-            "customer": "MYER",
-            "standout": 9,
-            "premium": 2
+    it('should return expected total when items selected as [3 mac, 2 Vga]', () => {
+        const items: Products = {
+            "customer": "xz",
+            "vga": 2,
+            "mbp": 3
         };
         const total = ruleEngine.apply(items);
-        expect(total).to.equal(3363.9);
-    });
-
-    it('should return expected total for privileged customer when items selected as [2P]', () => {
-        const items: Ads = {
-            "customer": "COLES",
-            "premium": 2
-        };
-        const total = ruleEngine.apply(items);
-        expect(total).to.equal(749.98);
+        expect(total).to.equal(4199.97);
     });
 });
 
