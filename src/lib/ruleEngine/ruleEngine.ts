@@ -75,26 +75,8 @@ export class RuleEngine {
         return transformReqObj;
     }
 
-    t = {
-        "vga": {"isApplicable": false},
-        "mbp": {
-            "isApplicable": true,
-            "applicableRules": [{
-                "desc": "VGA adapter free on purchase of Macbook pro",
-                "productType": "mbp",
-                "discountType": "Free",
-                "applyTo": "vga",
-                "discount": 0,
-                "from": 0,
-                "to": 0
-            }]
-        }
-    }
-
-
     apply(products: Products): number {
         const selectedRulesByProductType: Record<string, RuleMapping> = this.fetchRulesByProductType(products);
-        console.log(JSON.stringify(selectedRulesByProductType));
         Object.keys(selectedRulesByProductType).forEach(value => {
             const type = selectedRulesByProductType[value];
             const productQty = Number(products[value as keyof typeof products]) || 0;
